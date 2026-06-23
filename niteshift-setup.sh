@@ -48,7 +48,8 @@ $SUDO apt-get install -y \
     python3 \
     curl \
     pkg-config \
-    libssl-dev
+    libssl-dev \
+    libicu-dev
 
 # ---------------------------------------------------------------------------
 # 2. Rust toolchain.
@@ -102,7 +103,16 @@ log "Building the TypeScript runtime (@ubjs/core)"
 # subsequent runs are skipped via the xtask marker files.
 # ---------------------------------------------------------------------------
 log "Bootstrapping Hermes (branch ${HERMES_BRANCH}) and the test harness"
-cargo xtask bootstrap hermes --branch "$HERMES_BRANCH"
+# xtask uses directory existence as its "already built" marker. A previously
+# interrupted run can leave a `build/hermes` directory without a compiled
+# `bin/hermes` binary, which would then be wrongly skipped. Detect that partial
+# state and force a clean rebuild so reruns self-heal.
+HERMES_FORCE=""
+if [ -d build/hermes ] && [ ! -x build/hermes/bin/hermes ]; then
+    log "Found an incomplete Hermes build; forcing a clean rebuild"
+    HERMES_FORCE="--force"
+fi
+cargo xtask bootstrap $HERMES_FORCE hermes --branch "$HERMES_BRANCH"
 cargo xtask bootstrap
 
 # ---------------------------------------------------------------------------
