@@ -95,6 +95,12 @@ cargo xtask bootstrap yarn
 log "Building the TypeScript runtime (@ubjs/core)"
 (cd typescript && npm install && npm run build)
 
+# Build the @ubjs/node N-API runtime addon. This is required for the `napi`
+# test flavor (Node/Bun consumers load the compiled cdylib through it) and is
+# built separately in CI (`cd runtimes/napi && npm ci && npm run build:debug`).
+log "Building the N-API runtime (@ubjs/node)"
+(cd runtimes/napi && npm ci && npm run build:debug)
+
 # ---------------------------------------------------------------------------
 # 5. Hermes + C++ test harness.
 #
